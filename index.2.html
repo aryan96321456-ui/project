@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayEasy - QR Payment System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .splash-screen {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .splash-screen.hidden {
+            display: none;
+        }
+        
+        .app-logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .app-logo::after {
+            content: "₹";
+            color: white;
+            font-size: 60px;
+            font-weight: bold;
+        }
+        
+        .app-name {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .app-tagline {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+        
+        .feature-list {
+            text-align: left;
+            margin-bottom: 40px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .qr-section, .payment-section, .payment-method-section, .password-section, .loading-section, .success-section {
+            display: none;
+        }
+        
+        .qr-section.active, .payment-section.active, .payment-method-section.active, .password-section.active, .loading-section.active, .success-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .qr-display {
+            display: inline-block;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        #qrcode {
+            display: inline-block;
+        }
+        
+        #qrcode canvas, #qrcode img {
+            display: block !important;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 18px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .payment-methods {
+            text-align: left;
+        }
+
+        .method-category {
+            margin-bottom: 25px;
+        }
+
+        .category-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .payment-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .payment-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .payment-option.selected {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+
+        .payment-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .payment-info {
+            flex-grow: 1;
+        }
+
+        .payment-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 3px;
+        }
+
+        .payment-desc {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .radio-check {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .payment-option.selected .radio-check {
+            border-color: #667eea;
+        }
+
+        .payment-option.selected .radio-check::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: #667eea;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .amount-summary {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .summary-row.total {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            padding-top: 10px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .amount-highlight {
+            color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: #4caf50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            animation: scaleIn 0.5s ease;
+        }
+        
+        .success-icon::after {
+            content: "✓";
+            color: white;
+            font-size: 50px;
+            font-weight: bold;
+        }
+        
+        @keyframes scaleIn {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        .success-message {
+            color: #333;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .amount-display {
+            color: #667eea;
+            font-size: 32px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .payment-method-display {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .thank-you {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .info-text {
+            color: #888;
+            font-size: 13px;
+            margin-top: 20px;
+        }
+        
+        .back-btn {
+            background: #f5f5f5;
+            color: #333;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .warning-box h3 {
+            color: #856404;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .warning-box p {
+            color: #856404;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .password-input-group {
+            margin-bottom: 20px;
+        }
+
+        .password-input {
+            position: relative;
+        }
+
+        .password-input input {
+            padding-right: 50px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #999;
+        }
+
+        .security-note {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .security-note p {
+            color: #2e7d32;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .lock-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 30px;
+        }
+
+        .payment-details-box {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .detail-label {
+            color: #666;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .detail-value.amount {
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .loading-spinner::after {
+            content: '';
+            width: 80px;
+            height: 80px;
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .processing-steps {
+            text-align: left;
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
+        .process-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .process-step.active {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .process-step::before {
+            content: '⏳';
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        .process-step.active::before {
+            content: '✓';
+            color: #4caf50;
+        }
+
+        /* Transaction Details */
+        .transaction-id {
+            background: #f8f9ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: monospace;
+            color: #667eea;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .transaction-time {
+            color: #999;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9ff;
+        }
+
+        .receipt-downloaded {
+            color: #4caf50;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .receipt-downloaded.show {
+            display: block;
+        }
+
+        /* Confetti Animation */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #667eea;
+            position: absolute;
+            animation: confetti-fall 3s linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Cashback Banner */
+        .cashback-banner {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            animation: pulse 2s infinite;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        .cashback-text {
+            color: #856404;
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .cashback-amount {
+            color: #ff6b6b;
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .cashback-subtext {
+            color: #856404;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* Share Buttons */
+        .share-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px dashed #e0e0e0;
+        }
+
+        .share-title {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .share-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .share-whatsapp {
+            background: #25d366;
+            color: white;
+        }
+
+        .share-email {
+            background: #ea4335;
+            color: white;
+        }
+
+        .share-copy {
+            background: #667eea;
+            color: white;
+        }
+
+        .share-success {
+            color: #4caf50;
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .share-success.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Splash/Opening Screen -->
+        <div class="splash-screen" id="splashScreen">
+            <div class="app-logo"></div>
+            <div class="app-name">PayEasy</div>
+            <div class="app-tagline">Fast & Secure Payments</div>
+            
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <div>Quick & Easy Payments</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔒</div>
+                    <div>100% Secure Transactions</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📱</div>
+                    <div>Scan QR & Pay Instantly</div>
+                </div>
+            </div>
+            
+            <button class="btn" onclick="startApp()">Get Started</button>
+        </div>
+        
+        <!-- QR Code Section -->
+        <div class="qr-section" id="qrSection">
+            <h1>Scan QR Code</h1>
+            <p class="subtitle">Point your camera to pay</p>
+            
+            <div class="qr-display">
+                <div id="qrcode"></div>
+            </div>
+            
+            <button class="btn" onclick="showPayment()">Enter Payment Details</button>
+            <button class="back-btn" onclick="goBack('splash')">← Back</button>
+        </div>
+        
+        <!-- Payment Form Section -->
+        <div class="payment-section" id="paymentSection">
+            <h1>Enter Payment Details</h1>
+            <p class="subtitle">Enter amount to proceed</p>
+            
+            <div class="input-group">
+                <label for="amount">Enter Amount (₹)</label>
+                <input type="number" id="amount" placeholder="0.00" min="1" step="0.01">
+            </div>
+            
+            <button class="btn" onclick="showPaymentMethods()">Continue</button>
+            <button class="back-btn" onclick="goBack('qr')">← Back</button>
+        </div>
+
+        <!-- Payment Method Selection -->
+        <div class="payment-method-section" id="paymentMethodSection">
+            <h1>Select Payment Method</h1>
+            <p class="subtitle">Choose how you want to pay</p>
+
+            <div class="amount-summary">
+                <div class="summary-row">
+                    <span>Amount to Pay</span>
+                    <span class="amount-highlight">₹<span id="displayAmount">0.00</span></span>
+                </div>
+            </div>
+
+            <div class="payment-methods">
+                <!-- UPI Section -->
+                <div class="method-category">
+                    <div class="category-title">UPI</div>
+                    <div class="payment-option" onclick="selectPayment('upi')">
+                        <div class="payment-icon">📱</div>
+                        <div class="payment-info">
+                            <div class="payment-name">UPI / QR</div>
+                            <div class="payment-desc">Google Pay, PhonePe, Paytm</div>
+                        </div>
+                        <div class="radio-check"></div>
+                    </div>
+                </div>
+
+                <!-- Cards Section -->
+                <div class="method-category">
+                    <div class="category-title">Cards</div>
+                    <div class="payment-option" onclick="selectPayment('debit')">
+                        <div class="payment-icon">💳</div>
+                        <div class="payment-info">
+                            <div class="payment-name">Debit Card</div>
+                            <div class="payment-desc">Visa, Mastercard, RuPay</div>
+                        </div>
+                        <div class="radio-check"></div>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment('credit')">
+                        <div class="payment-icon">💳</div>
+                        <div class="payment-info">
+                            <div class="payment-name">Credit Card</div>
+                            <div class="payment-desc">Visa, Mastercard, Amex</div>
+                        </div>
+                        <div class="radio-check"></div>
+                    </div>
+                </div>
+
+                <!-- Banks Section -->
+                <div class="method-category">
+                    <div class="category-title">Net Banking</div>
+                    <div class="payment-option" onclick="selectPayment('sbi')">
+                        <div class="payment-icon">🏦</div>
+                        <div class="payment-info">
+                            <div class="payment-name">State Bank of India</div>
+                            <div class="payment-desc">SBI Net Banking</div>
+                        </div>
+                        <div class="radio-check"></div>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment('hdfc')">
+                        <div class="payment-icon">🏦</div>
+                        <div class="payment-info">
+                            <div class="payment-name">HDFC Bank</div>
+                            <div class="payment-desc">HDFC Net Banking</div>
+                        </div>
+                        <div class="radio-check"></div>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment('icici')">
+                        <div class="payment-icon">🏦</div>
+                        <div class="payment-info">
+                            <div class="payment-name">ICICI Bank</div>
+                            <div class="payment-desc">ICICI Net Banking</div>
+                        </div>
+                        <div class="radio-check"></div>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment('axis')">
+                        <div class="payment-icon">🏦</div>
+                        <div class="payment-info">
+                            <div class="payment-name">Axis Bank</div>
+                            <div class="payment-desc">Axis Net Banking</div>
+                        </div>
+                        <div class="radio-check"></div>
+                    </div>
+                </div>
+
+                <!-- Wallets Section -->
+                <div class="method-category">
+                    <div class="category-title">Wallets</div>
+                    <div class="payment-option" onclick="selectPayment('paytm')">
+                        <div class="payment-icon">💰</div>
+                        <div class="payment-info">
+                            <div class="payment-name">Paytm Wallet</div>
+                            <div class="payment-desc">Pay with Paytm balance</div>
+                        </div>
+                        <div class="radio-check"></div>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment('mobikwik')">
+                        <div class="payment-icon">💰</div>
+                        <div class="payment-info">
+                            <div class="payment-name">MobiKwik</div>
+                            <div class="payment-desc">Pay with MobiKwik wallet</div>
+                        </div>
+                        <div class="radio-check"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn" id="payBtn" onclick="showPasswordVerification()" disabled>Pay Now</button>
+            <button class="back-btn" onclick="goBack('amount')">← Back</button>
+        </div>
+
+        <!-- Password Verification Section -->
+        <div class="password-section" id="passwordSection">
+            <div class="lock-icon">🔒</div>
+            <h1>Verify Payment</h1>
+            <p class="subtitle">Enter your PIN/Password to confirm</p>
+
+            <div class="payment-details-box">
+                <div class="detail-row">
+                    <span class="detail-label">Amount</span>
+                    <span class="detail-value amount">₹<span id="verifyAmount">0.00</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Payment Method</span>
+                    <span class="detail-value" id="verifyMethod">-</span>
+                </div>
+            </div>
+
+            <div class="security-note">
+                <p>🔐 Your payment is secured with end-to-end encryption</p>
+            </div>
+
+            <div class="password-input-group">
+                <label for="password">Enter PIN/Password</label>
+                <div class="password-input">
+                    <input type="password" id="password" placeholder="Enter your PIN or password" maxlength="6">
+                    <button class="toggle-password" onclick="togglePassword()">👁️</button>
+                </div>
+            </div>
+            
+            <button class="btn" onclick="processPayment()">Confirm Payment</button>
+            <button class="back-btn" onclick="goBack('methods')">← Back</button>
+        </div>
+
+        <!-- Loading/Processing Section -->
+        <div class="loading-section" id="loadingSection">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Processing Payment...</div>
+            <div class="loading-subtext">Please wait, do not close this page</div>
+
+            <div class="processing-steps">
+                <div class="process-step active" id="step1">Verifying credentials</div>
+                <div class="process-step" id="step2">Contacting bank</div>
+                <div class="process-step" id="step3">Confirming transaction</div>
+            </div>
+        </div>
+        
+        <!-- Success Section -->
+        <div class="success-section" id="successSection">
+            <div class="success-icon"></div>
+            <div class="success-message">Payment Done!</div>
+            <div class="amount-display">₹<span id="paidAmount">0</span></div>
+            <div class="payment-method-display">Paid via <span id="paidMethod">UPI</span></div>
+            
+            <!-- Cashback Banner -->
+            <div class="cashback-banner">
+                <div class="cashback-text">🎉 Congratulations!</div>
+                <div class="cashback-amount">You earned ₹<span id="cashbackAmount">0</span> Cashback!</div>
+                <div class="cashback-subtext">Credited to your PayEasy wallet</div>
+            </div>
+            
+            <div class="transaction-id">
+                TXN ID: <span id="transactionId"></span>
+            </div>
+            <div class="transaction-time" id="transactionTime"></div>
+            
+            <div class="thank-you">Thank You!</div>
+            <p class="info-text">Your transaction has been completed successfully</p>
+            
+            <button class="btn" onclick="downloadReceipt()">📥 Download Receipt</button>
+            <div class="receipt-downloaded" id="receiptMsg">✓ Receipt downloaded successfully!</div>
+            
+            <!-- Share Section -->
+            <div class="share-section">
+                <div class="share-title">Share Receipt</div>
+                <div class="share-buttons">
+                    <button class="share-btn share-whatsapp" onclick="shareWhatsApp()">
+                        💬 WhatsApp
+                    </button>
+                    <button class="share-btn share-email" onclick="shareEmail()">
+                        📧 Email
+                    </button>
+                    <button class="share-btn share-copy" onclick="copyReceipt()">
+                        📋 Copy
+                    </button>
+                </div>
+                <div class="share-success" id="shareMsg">✓ Copied to clipboard!</div>
+            </div>
+            
+            <button class="btn btn-secondary" onclick="newPayment()" style="margin-top: 20px;">Make Another Payment</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        let qrGenerated = false;
+        let selectedMethod = null;
+        let selectedMethodName = '';
+        
+        const paymentNames = {
+            'upi': 'UPI',
+            'debit': 'Debit Card',
+            'credit': 'Credit Card',
+            'sbi': 'SBI Net Banking',
+            'hdfc': 'HDFC Net Banking',
+            'icici': 'ICICI Net Banking',
+            'axis': 'Axis Net Banking',
+            'paytm': 'Paytm Wallet',
+            'mobikwik': 'MobiKwik Wallet'
+        };
+        
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('pay') === '1') {
+                document.getElementById('splashScreen').classList.add('hidden');
+                document.getElementById('paymentSection').classList.add('active');
+            }
+        };
+        
+        function startApp() {
+            document.getElementById('splashScreen').classList.add('hidden');
+            document.getElementById('qrSection').classList.add('active');
+            
+            if (!qrGenerated) {
+                // Use your actual GitHub Pages URL
+                const paymentUrl = 'https://aryan96321456-ui.github.io/app/';
+                
+                new QRCode(document.getElementById("qrcode"), {
+                    text: paymentUrl,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                qrGenerated = true;
+            }
+        }
+        
+        function showPayment() {
+            document.getElementById('qrSection').classList.remove('active');
+            document.getElementById('paymentSection').classList.add('active');
+        }
+
+        function showPaymentMethods() {
+            const amount = document.getElementById('amount').value;
+            
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+
+            document.getElementById('displayAmount').textContent = parseFloat(amount).toFixed(2);
+            document.getElementById('paymentSection').classList.remove('active');
+            document.getElementById('paymentMethodSection').classList.add('active');
+        }
+
+        function selectPayment(method) {
+            selectedMethod = method;
+            selectedMethodName = paymentNames[method];
+            
+            // Remove selected class from all options
+            const options = document.querySelectorAll('.payment-option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            
+            // Add selected class to clicked option
+            event.currentTarget.classList.add('selected');
+            
+            // Enable pay button
+            document.getElementById('payBtn').disabled = false;
+        }
+
+        function showPasswordVerification() {
+            if (!selectedMethod) {
+                alert('Please select a payment method');
+                return;
+            }
+
+            const amount = document.getElementById('amount').value;
+            
+            document.getElementById('verifyAmount').textContent = parseFloat(amount).toFixed(2);
+            document.getElementById('verifyMethod').textContent = selectedMethodName;
+            
+            document.getElementById('paymentMethodSection').classList.remove('active');
+            document.getElementById('passwordSection').classList.add('active');
+        }
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = event.currentTarget;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+        
+        function processPayment() {
+            const password = document.getElementById('password').value;
+            
+            if (!password || password.length < 4) {
+                alert('Please enter a valid PIN/Password (minimum 4 characters)');
+                return;
+            }
+
+            const amount = document.getElementById('amount').value;
+            
+            // Show loading screen
+            document.getElementById('passwordSection').classList.remove('active');
+            document.getElementById('loadingSection').classList.add('active');
+
+            // Simulate processing steps
+            setTimeout(() => {
+                document.getElementById('step2').classList.add('active');
+            }, 1000);
+
+            setTimeout(() => {
+                document.getElementById('step3').classList.add('active');
+            }, 2000);
+
+            // Show success after processing
+            setTimeout(() => {
+                showSuccess(amount);
+            }, 3000);
+        }
+
+        function showSuccess(amount) {
+            // Generate transaction ID
+            const txnId = 'TXN' + Date.now().toString().slice(-10);
+            document.getElementById('transactionId').textContent = txnId;
+
+            // Get current date and time
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-IN', { 
+                day: '2-digit', 
+                month: 'short', 
+                year: 'numeric' 
+            });
+            const timeStr = now.toLocaleTimeString('en-IN', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            document.getElementById('transactionTime').textContent = `${dateStr} at ${timeStr}`;
+
+            // Calculate cashback (2% of amount)
+            const cashback = (parseFloat(amount) * 0.02).toFixed(2);
+            document.getElementById('cashbackAmount').textContent = cashback;
+
+            // Show success screen
+            document.getElementById('loadingSection').classList.remove('active');
+            document.getElementById('paidAmount').textContent = parseFloat(amount).toFixed(2);
+            document.getElementById('paidMethod').textContent = selectedMethodName;
+            document.getElementById('successSection').classList.add('active');
+
+            // Trigger confetti
+            createConfetti();
+
+            // Play success sound
+            playSuccessSound();
+
+            // Reset processing steps
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step3').classList.remove('active');
+        }
+
+        // Create confetti animation
+        function createConfetti() {
+            const colors = ['#667eea', '#764ba2', '#ffd700', '#ff6b6b', '#4caf50', '#2196f3'];
+            const confettiCount = 50;
+
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    document.body.appendChild(confetti);
+
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }, i * 30);
+            }
+        }
+
+        // Play success sound
+        function playSuccessSound() {
+            // Create audio context for success sound
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+
+            // Second tone
+            setTimeout(() => {
+                const oscillator2 = audioContext.createOscillator();
+                const gainNode2 = audioContext.createGain();
+
+                oscillator2.connect(gainNode2);
+                gainNode2.connect(audioContext.destination);
+
+                oscillator2.frequency.value = 1000;
+                oscillator2.type = 'sine';
+
+                gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+                oscillator2.start(audioContext.currentTime);
+                oscillator2.stop(audioContext.currentTime + 0.5);
+            }, 100);
+        }
+
+        function downloadReceipt() {
+            // Create receipt content
+            const amount = document.getElementById('paidAmount').textContent;
+            const method = document.getElementById('paidMethod').textContent;
+            const txnId = document.getElementById('transactionId').textContent;
+            const time = document.getElementById('transactionTime').textContent;
+
+            const receiptContent = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        PAYEASY RECEIPT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Transaction ID: ${txnId}
+Date & Time: ${time}
+
+Amount Paid: ₹${amount}
+Payment Method: ${method}
+
+Status: SUCCESS ✓
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Thank you for using PayEasy!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            `;
+
+            // Create blob and download
+            const blob = new Blob([receiptContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `PayEasy_Receipt_${txnId}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            // Show success message
+            document.getElementById('receiptMsg').classList.add('show');
+            setTimeout(() => {
+                document.getElementById('receiptMsg').classList.remove('show');
+            }, 3000);
+        }
+
+        // Share via WhatsApp
+        function shareWhatsApp() {
+            const amount = document.getElementById('paidAmount').textContent;
+            const method = document.getElementById('paidMethod').textContent;
+            const txnId = document.getElementById('transactionId').textContent;
+            const time = document.getElementById('transactionTime').textContent;
+
+            const message = `✅ Payment Successful!\n\nAmount: ₹${amount}\nMethod: ${method}\nTransaction ID: ${txnId}\nDate: ${time}\n\nPowered by PayEasy`;
+            
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        // Share via Email
+        function shareEmail() {
+            const amount = document.getElementById('paidAmount').textContent;
+            const method = document.getElementById('paidMethod').textContent;
+            const txnId = document.getElementById('transactionId').textContent;
+            const time = document.getElementById('transactionTime').textContent;
+
+            const subject = 'PayEasy Payment Receipt';
+            const body = `Payment Successful!\n\nAmount Paid: ₹${amount}\nPayment Method: ${method}\nTransaction ID: ${txnId}\nDate & Time: ${time}\n\nThank you for using PayEasy!`;
+            
+            const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoUrl;
+        }
+
+        // Copy receipt to clipboard
+        function copyReceipt() {
+            const amount = document.getElementById('paidAmount').textContent;
+            const method = document.getElementById('paidMethod').textContent;
+            const txnId = document.getElementById('transactionId').textContent;
+            const time = document.getElementById('transactionTime').textContent;
+
+            const receiptText = `━━━━━━━━━━━━━━━━━━━━━━\nPAYEASY RECEIPT\n━━━━━━━━━━━━━━━━━━━━━━\n\nTransaction ID: ${txnId}\nDate & Time: ${time}\nAmount: ₹${amount}\nMethod: ${method}\nStatus: SUCCESS ✓\n\n━━━━━━━━━━━━━━━━━━━━━━`;
+
+            navigator.clipboard.writeText(receiptText).then(() => {
+                document.getElementById('shareMsg').classList.add('show');
+                setTimeout(() => {
+                    document.getElementById('shareMsg').classList.remove('show');
+                }, 2000);
+            });
+        }
+        
+        function goBack(section) {
+            document.getElementById('qrSection').classList.remove('active');
+            document.getElementById('paymentSection').classList.remove('active');
+            document.getElementById('paymentMethodSection').classList.remove('active');
+            document.getElementById('passwordSection').classList.remove('active');
+            document.getElementById('loadingSection').classList.remove('active');
+            
+            if (section === 'splash') {
+                document.getElementById('splashScreen').classList.remove('hidden');
+            } else if (section === 'qr') {
+                document.getElementById('qrSection').classList.add('active');
+            } else if (section === 'amount') {
+                document.getElementById('paymentSection').classList.add('active');
+            } else if (section === 'methods') {
+                document.getElementById('paymentMethodSection').classList.add('active');
+            }
+        }
+        
+        function newPayment() {
+            document.getElementById('successSection').classList.remove('active');
+            document.getElementById('amount').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('receiptMsg').classList.remove('show');
+            document.getElementById('shareMsg').classList.remove('show');
+            selectedMethod = null;
+            selectedMethodName = '';
+            
+            // Remove all selections
+            const options = document.querySelectorAll('.payment-option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            
+            document.getElementById('qrSection').classList.add('active');
+        }
+    </script>
+</body>
+</html>
